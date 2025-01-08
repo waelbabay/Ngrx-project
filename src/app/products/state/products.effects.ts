@@ -2,7 +2,7 @@ import { Injectable } from "@angular/core";
 import { Actions, createEffect, ofType } from "@ngrx/effects";
 import { ProductsService } from "../products.service";
 import { productsAPIActions, productsPageActions } from "./products.actions";
-import { catchError, concatMap, exhaustMap, map, mergeMap, of } from "rxjs";
+import { catchError, concatMap, exhaustMap, map, mergeMap, of, tap } from "rxjs";
 import { OnInitEffects } from "@ngrx/effects/src/lifecycle_hooks";
 import { Action } from "@ngrx/store";
 
@@ -12,7 +12,6 @@ export class productEffects implements OnInitEffects {
     }
 
     ngrxOnInitEffects(): Action {
-        console.log('init effects')
         return productsPageActions.loadProducts();
     }
 
@@ -40,7 +39,7 @@ export class productEffects implements OnInitEffects {
         this.actions$.pipe(
             ofType(productsPageActions.updateProduct),
             concatMap(({ product }) => this.productsService.update(product).pipe(
-                map(product => productsAPIActions.productUpdatedSuccess({ product })),
+                map(() => productsAPIActions.productUpdatedSuccess({ product })),
                 catchError((errorMessage) => of(productsAPIActions.productAddedFail({ errorMessage })))
             ))
         )
