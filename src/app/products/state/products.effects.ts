@@ -5,10 +5,11 @@ import { productsAPIActions, productsPageActions } from "./products.actions";
 import { catchError, concatMap, exhaustMap, map, mergeMap, of, tap } from "rxjs";
 import { OnInitEffects } from "@ngrx/effects/src/lifecycle_hooks";
 import { Action } from "@ngrx/store";
+import { Router } from "@angular/router";
 
 @Injectable()
 export class productEffects implements OnInitEffects {
-    constructor(private actions$: Actions, private productsService: ProductsService) {
+    constructor(private actions$: Actions, private productsService: ProductsService, private router: Router) {
     }
 
     ngrxOnInitEffects(): Action {
@@ -39,7 +40,7 @@ export class productEffects implements OnInitEffects {
         this.actions$.pipe(
             ofType(productsPageActions.updateProduct),
             concatMap(({ product }) => this.productsService.update(product).pipe(
-                map(() => productsAPIActions.productUpdatedSuccess({ product })),
+                map(() => productsAPIActions.productUpdatedSuccess({ update: { id: product.id, changes: product } })),
                 catchError((errorMessage) => of(productsAPIActions.productAddedFail({ errorMessage })))
             ))
         )
@@ -53,5 +54,17 @@ export class productEffects implements OnInitEffects {
                 catchError((errorMessage) => of(productsAPIActions.productDeletedFail({ errorMessage })))
             ))
         )
+    );
+
+    redirectToProductsPage = createEffect(() =>
+        this.actions$.pipe(
+            ofType(
+                productsAPIActions.productAddedSuccess,
+                productsAPIActions.productUpdatedSuccess,
+                productsAPIActions.productDeletedSuccess
+            ),
+            tap(() => this.router.navigate(['/products'])
+            )),
+        { dispatch: false }
     );
 } 
